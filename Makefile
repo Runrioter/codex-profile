@@ -1,13 +1,14 @@
-PROFILE ?= qwen38
-PROVIDER ?= lmstudio
+PREFIX ?= $(HOME)/.local
 
-.PHONY: install list test
+.PHONY: build install test
 
-install:
-	python3 bin/codex-profile install $(PROFILE) --provider $(PROVIDER)
+build:
+	swift build -c release --scratch-path .build
 
-list:
-	python3 bin/codex-profile list
+install: build
+	install -d "$(PREFIX)/bin"
+	install -m 755 .build/release/codexp "$(PREFIX)/bin/codexp"
+	cp -R .build/release/codexp_codexp.bundle "$(PREFIX)/bin/"
 
 test:
-	python3 -m unittest discover -s tests
+	swift test --scratch-path .build

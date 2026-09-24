@@ -1,25 +1,28 @@
 # Codex Profiles
 
-在新电脑上快速安装 Codex 的本地模型 profile。当前提供 LM Studio 模版，预设模型为 `qwen/qwen3.8-27b`；`qwen38` 是可自定义的 profile 名称。
+`codexp` 是管理 Codex profile 的 Swift 命令行工具。当前内置 LM Studio 模版，预设模型为 `qwen/qwen3.8-27b`。
 
-## 使用前准备
+## 准备与安装
 
-- 安装 Codex CLI、Python 3 和 `make`。
-- 在 LM Studio 中下载并加载 `qwen/qwen3.8-27b`，启动本地 API 服务。
-
-## 安装与启动
-
-在仓库根目录运行：
+安装 Codex CLI、Swift 6 和 `make`。在 LM Studio 中下载并加载该模型，启动本地 API 服务。在本仓库运行：
 
 ```sh
-make install PROFILE=qwen38
-codex --profile qwen38
+make install
 ```
 
-安装后可在 Codex 的 `/status` 中核对模型和提供者是否分别为 `qwen/qwen3.8-27b` 与 `lmstudio`。日常启动只需 `--profile`，无需再添加 `--oss` 或 `-m`。
+命令会将 `codexp` 安装到 `~/.local/bin`。如果这个目录尚未加入 `PATH`，请将它加入 shell 配置；也可以用 `make install PREFIX=/自定义目录` 指定安装位置。
 
-想使用其他 profile 名称，可以运行 `make install PROFILE=local-qwen`，之后用 `codex --profile local-qwen` 启动。运行 `make list` 可查看可用的提供者模版；选择其他模版时指定 `PROVIDER`，例如 `make install PROFILE=my-model PROVIDER=lmstudio`。
+## 管理 profile
 
-安装文件默认写入当前用户的 `~/.codex`；设置了 `$CODEX_HOME` 时写入该目录。安装器会自动生成适用于当前电脑的模型目录路径。如果目标文件与模版内容不同，安装会停止并列出冲突文件。请先检查现有配置；确认要替换后，再运行 `python3 bin/codex-profile install qwen38 --provider lmstudio --force`。
+```sh
+codexp create qwen38
+codexp list
+codex --profile qwen38
+codexp remove qwen38
+```
 
-本 README 面向使用者；供 coding agents 遵循的开发与模版维护约定见 [AGENTS.md](AGENTS.md)。
+`create` 使用 LM Studio 模版创建任意合法名称，例如 `codexp create local-qwen`。添加其他提供者模版后，可用 `codexp create local-model --provider <提供者名>` 选择。`list` 列出 Codex 目录中所有已安装的 profile，包括手工创建的 profile。
+
+配置默认保存在 `~/.codex`，设置 `$CODEX_HOME` 时使用该目录。`create` 遇到内容不同的已有文件会停止；检查后可加 `--force` 替换。`remove` 删除指定 profile 的配置文件；仅当其专属模型目录文件被该 profile 引用且没有其他 profile 共用时，才会一并删除。
+
+本 README 面向使用者；供 coding agents 遵循的开发约定见 [AGENTS.md](AGENTS.md)。
