@@ -2,6 +2,10 @@
 
 This file guides coding agents contributing to the repository. Keep human installation and usage instructions in `README.md`.
 
+## Language Rule
+
+Use English throughout this repository. This applies to `README.md`, other documentation, source code, comments, tests, template text, CLI messages, and commit or pull request text. Do not add Chinese text or parallel translated documentation. Before finishing a change, run `rg -n '\p{Han}' .` and resolve every match in tracked project files.
+
 ## Project Structure & Module Organization
 
 `Package.swift` defines the Swift executable target. `Sources/Codexp/` contains the `codexp` CLI and profile storage logic. `templates/<oss_provider>/` holds one provider's `config.toml.in` and `model-catalog.json`; SwiftPM bundles these resources into the executable product. `tests/CodexpTests/` contains XCTest coverage. Keep `README.md` focused on human setup and usage; put implementation guidance here. Generated profiles belong in `$CODEX_HOME` or `~/.codex`, not in this repository.
