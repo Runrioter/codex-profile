@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Install Codex profiles from the repository's templates directory."""
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import tempfile
+
+
+TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
+NAME_PATTERN = re.compile(r"[a-z][a-z0-9_-]*\Z")
+PLACEHOLDER = "{{MODEL_CATALOG_JSON}}"
+
+
+def available_providers():
+    return sorted(
+        path.name
+        for path in TEMPLATES.iterdir()
+        if path.is_dir()
+        and NAME_PATTERN.fullmatch(path.name)
+        and (path / "config.toml.in").is_file()
+        and (path / "model-catalog.json").is_file()
+    )
+
+
+def codex_home():
+    configured = os.environ.get("CODEX_HOME")
+    return Path(configured).expanduser().resolve() if configured else Path.home() / ".codex"
+
+
+def render(provider, profile, target_dir):
+    source_dir = TEMPLATES / provider
+    config_template = (source_dir / "config.toml.in").read_text(encoding="utf-8")
+    if config_template.count(PLACEHOLDER) != 1:
+        raise ValueError(f"{provider}: config.toml.in must contain exactly one {PLACEHOLDER}")
+
+    catalog_text = (source_dir / "model-catalog.json").read_text(encoding="utf-8")
+    json.loads(catalog_text)
+    catalog_path = target_dir / f"{profile}-model-catalog.json"
+    config_text = config_template.replace(PLACEHOLDER, json.dumps(str(catalog_path), ensure_ascii=False))
+    return {
+        target_dir / f"{profile}.config.toml": config_text,
+        catalog_path: catalog_text,
+    }
+
+
+def write_atomic(path, content):
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            output.write(content)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def install(profile, provider, force):
+    if not NAME_PATTERN.fullmatch(profile):
+        raise ValueError("Profile name must start with a lowercase letter and contain only lowercase letters, digits, _ or -.")
+    if provider not in available_providers():
+        raise ValueError(f"Unknown provider: {provider}. Available: {', '.join(available_providers())}")
+
+    target_dir = codex_home()
+    files = render(provider, profile, target_dir)
+    conflicts = [
+        path for path, content in files.items()
+        if path.is_symlink() or (path.exists() and path.read_text(encoding="utf-8") != content)
+    ]
+    if conflicts and not force:
+        names = ", ".join(str(path) for path in conflicts)
+        raise ValueError(f"Existing files differ: {names}. Review them, then rerun with --force to replace.")
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+    for path, content in files.items():
+        if path.exists() and not path.is_symlink() and path.read_text(encoding="utf-8") == content:
+            print(f"Unchanged: {path}")
+            continue
+        write_atomic(path, content)
+        print(f"Installed: {path}")
+    print(f"Use with: codex --profile {profile}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("list", help="List available provider templates")
+    install_parser = commands.add_parser("install", help="Install a profile into CODEX_HOME or ~/.codex")
+    install_parser.add_argument("profile", help="Profile name")
+    install_parser.add_argument("--provider", default="lmstudio", help="Provider template (default: lmstudio)")
+    install_parser.add_argument("--force", action="store_true", help="Replace existing differing files")
+    args = parser.parse_args()
+
+    try:
+        if args.command == "list":
+            print("\n".join(available_providers()))
+        else:
+            install(args.profile, args.provider, args.force)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        parser.exit(1, f"Error: {error}\n")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,44 @@
+{
+  "models": [
+    {
+      "slug": "qwen/qwen3.8-27b",
+      "display_name": "Qwen3.8 27B",
+      "description": "Qwen3.8 27B running locally through LM Studio.",
+      "default_reasoning_level": "xhigh",
+      "supported_reasoning_levels": [
+        {
+          "effort": "low",
+          "description": "Light reasoning for faster responses."
+        },
+        {
+          "effort": "medium",
+          "description": "Balanced reasoning for general coding tasks."
+        },
+        {
+          "effort": "xhigh",
+          "description": "Maximum reasoning depth supported by Qwen3.8 27B."
+        }
+      ],
+      "shell_type": "shell_command",
+      "visibility": "list",
+      "supported_in_api": true,
+      "priority": 0,
+      "supports_reasoning_summaries": true,
+      "default_reasoning_summary": "auto",
+      "supports_parallel_tool_calls": false,
+      "experimental_supported_tools": [],
+      "support_verbosity": false,
+      "default_verbosity": null,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "context_window": 262144,
+      "truncation_policy": {
+        "mode": "tokens",
+        "limit": 262144
+      },
+      "base_instructions": "You are a coding agent. Work carefully in the user's repository, use available tools when appropriate, and verify your work before reporting completion."
+    }
+  ]
+}

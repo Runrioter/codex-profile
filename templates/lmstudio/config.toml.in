@@ -1,0 +1,14 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+model = "qwen/qwen3.8-27b"
+model_provider = "lmstudio"
+
+oss_provider = "lmstudio"
+
+model_catalog_json = {{MODEL_CATALOG_JSON}}
+
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "auto"
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
